@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hp.server.dao.BasicMapper">
+
+    <!-- 新增小区-->
+    <insert id="saveRegion" parameterType="com.hp.server.dto.BasicRegionDTO">
+        INSERT INTO `basic_region`(`region`, `create_time`,`company_id`) VALUES (#{region},now(),#{companyId})
+    </insert>
+    <!--更新小区-->
+    <update id="updateRegion" parameterType="com.hp.server.dto.BasicRegionDTO">
+        UPDATE `basic_region` SET `region` = #{region} WHERE `id` = #{id}
+    </update>
+    <!--逻辑删除小区-->
+    <delete id="deleteRegion">
+        UPDATE `basic_region` SET `is_deleted` = 1 WHERE `id` = #{id}
+    </delete>
+    <!-- 获取小区列表-->
+    <select id="getRegion" resultType="com.hp.server.vo.BasicRegionVo">
+        select * from `basic_region` where is_deleted = 0 and company_id = #{companyId}
+    </select>
+    <!--新增楼宇-->
+    <insert id="saveTower" parameterType="com.hp.server.dto.BasicTowerDTO">
+        INSERT INTO `basic_tower`(`region_id`, `tower`, `create_time`,`company_id`)
+        VALUES (#{regionId},#{tower},now(),#{companyId})
+    </insert>
+    <!--获取楼宇列表-->
+    <select id="getTower" resultType="com.hp.server.vo.BasicTowerVo">
+        select bt.id,bt.region_id regionId,bt.tower,bt.create_time createTime,br.region,bt.company_id from `basic_tower`
+        bt
+        left join `basic_region` br on bt.region_id = br.id
+        where bt.is_deleted = 0 and bt.company_id = #{companyId}
+        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(regionId)">
+            and br.id = #{regionId}
+        </if>
+    </select>
+    <!--更新楼宇-->
+    <update id="updateTower" parameterType="com.hp.server.dto.BasicTowerDTO">
+        UPDATE `basic_tower` SET  `tower` = #{tower} WHERE `id` = #{id}
+    </update>
+    <!--逻辑删除楼宇-->
+    <delete id="deleteTower">
+        UPDATE `basic_tower` SET  `is_deleted` = 1 WHERE `id` = #{id}
+    </delete>
+    <!--新增单元-->
+    <insert id="saveCell" parameterType="com.hp.server.dto.BasicCellDTO">
+        INSERT INTO `basic_cell`(`tower_id`, `cell`, `create_time`,`company_id`)
+        VALUES (#{towerId},#{cell},now(),#{companyId})
+    </insert>
+    <!--新建分组-->
+    <insert id="saveGroup">
+        INSERT INTO `basic_group`(`group`, `create_time`, `company_id`)
+        VALUES (#{group},now(),#{company_id})
+    </insert>
+    <!--获取单元列表-->
+    <select id="getCell" resultType="com.hp.server.vo.BasicCellVo">
+        select bc.id,bc.tower_id towerId,bc.cell,bc.create_time createTime,bt.tower,br.region,bc.company_id,bt.region_id
+        from `basic_cell` bc
+        left join `basic_tower` bt on bc.tower_id = bt.id
+        LEFT JOIN basic_region br ON bt.region_id = br.id
+        where bc.is_deleted = 0 and bc.company_id = #{companyId}
+        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(towerId)">
+            and bt.id = #{towerId}
+        </if>
+        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(regionId)">
+            and br.id = #{regionId}
+        </if>
+    </select>
+    <!--查询楼宇数量-->
+    <select id="countTower" resultType="java.lang.Integer" parameterType="com.hp.server.dto.BasicTowerDTO">
+        select count(id) from basic_tower where tower = #{tower} and company_id = #{companyId}
+    </select>
+    <!--查查某个楼宇里单元总数-->
+    <select id="countCells" resultType="java.lang.Integer">
+        select count(id) from basic_cell where tower_id = #{towerId}
+    </select>
+    <!--查询小区楼宇数量-->
+    <select id="countTowers" resultType="java.lang.Integer">
+        select count(id) from basic_cell where tower_id = #{id}
+    </select>
+    <!--    分页查询分组列表-->
+    <select id="getGroup" resultType="com.hp.server.vo.BasicGroupVo">
+    select * from basic_group where is_deleted = 0 and company_id = #{companyId}
+    </select>
+    <!--更新单元-->
+    <update id="updateCell">
+        UPDATE `basic_cell` SET `cell` = #{cell} WHERE `id` = #{id}
+    </update>
+    <!--    更新分组-->
+    <update id="updateGroup">
+        update basic_group set group = #{group} where id = #{id}
+    </update>
+    <!--查查某个楼宇里单元总数-->
+    <delete id="deleteCell">
+        UPDATE `basic_cell` SET `is_deleted` = 1 WHERE `id` = #{id}
+    </delete>
+    <!--    逻辑删除分组-->
+    <delete id="deleteGroup">
+        UPDATE `basic_group` SET `is_deleted` = 1 WHERE `id` = #{id}
+    </delete>
+</mapper>

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hp.server.dao.ProductRegistMapper">
+    <insert id="save" parameterType="com.hp.server.vo.ProductRegistVo">
+        INSERT INTO `product_regist`(`create_time`, `company_id`, `product_num`, `device_code`, `imei`, `imsi`, `equipment_name`,
+         `equipment_type`, `product_type`, `equipment_code`, `product_date`, `chenk_peo`, `input_date`, `input_peo`, `leave_date`, `remarks`)
+          VALUES (now(),#{companyId},#{productNum},#{deviceCode},#{imei},#{imsi},#{equipmentName},
+          #{equipmentType},#{productType},#{equipmentCode},#{productDate},#{chenkPeo},now(),#{inputPeo},#{leaveDate},#{remarks})
+    </insert>
+    <update id="update" parameterType="com.hp.server.vo.ProductRegistVo">
+        UPDATE `product_regist`
+        <set>
+            <if test="productNum != null">
+                product_num = #{productNum},
+            </if>
+            <if test="deviceCode != null">
+                device_code = #{deviceCode},
+            </if>
+            <if test="imei != null">
+                imei = #{imei},
+            </if>
+            <if test="imsi != null">
+                imsi = #{imsi},
+            </if>
+            <if test="equipmentName != null">
+                equipment_name = #{equipmentName},
+            </if>
+            <if test="equipmentType">
+                equipment_type = #{equipmentType},
+            </if>
+            <if test="productType">
+                product_type = #{productType},
+            </if>
+            <if test="equipmentCode != null">
+                equipment_code = #{equipmentCode},
+            </if>
+            <if test="productDate != null">
+                product_date = #{productDate},
+            </if>
+            <if test="chenkPeo != null">
+                chenk_peo = #{chenkPeo},
+            </if>
+            <if test="inputPeo != null">
+                input_peo = #{inputPeo},
+            </if>
+            <if test="leaveDate != null">
+                leave_date = #{leaveDate},
+            </if>
+            <if test="remarks != null">
+                remarks = #{remarks},
+            </if>
+            <if test="isDeleted != null">
+                is_deleted = #{isDeleted},
+            </if>
+            <if test="inputDate != null">
+                input_date = #{inputDate},
+            </if>
+        </set>
+        WHERE `id` = #{id}
+    </update>
+    <select id="getLists" resultType="com.hp.server.dto.ProductRegistDTO">
+        select * from product_regist where is_deleted = 0
+        <if test="id != null">
+            and id = #{id}
+        </if>
+        <if test="companyId != null">
+            and company_id = #{companyId}
+        </if>
+        <if test="productNum != null">
+            and product_num = #{productNum}
+        </if>
+        <if test="deviceCode != null">
+            and device_code = #{deviceCode}
+        </if>
+        <if test="imei != null">
+            and imei = #{imei}
+        </if>
+        <if test="equipmentName != null">
+            and equipment_name = #{equipmentName}
+        </if>
+        <if test="equipmentType">
+            and equipment_type = #{equipmentType}
+        </if>
+        <if test="productType">
+            and product_type = #{productType}
+        </if>
+        <if test="productDate != null">
+            and product_date = #{productDate}
+        </if>
+        <if test="leaveDate != null">
+            and leave_date = #{leaveDate}
+        </if>
+    </select>
+</mapper>

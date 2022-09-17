@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hp.server.dao.EquipmentMapper">
+
+
+    <insert id="save">
+        INSERT INTO `basic_equipment`(`create_time`, `company_id`, `equipment_type`, `equipment_class`, `remarks`)
+        VALUES (now(),#{companyId},#{equipmentType},#{equipmentClass},#{remarks})
+
+    </insert>
+    <update id="update">
+        UPDATE `basic_equipment`
+        <set>
+            <if test="equipmentType != null">
+                equipment_type = #{equipmentType},
+            </if>
+            <if test="equipmentClass != null">
+                equipment_class = #{equipmentClass},
+            </if>
+            <if test="remarks != null">
+                remarks = #{remarks},
+            </if>
+            <if test="isDeleted != null">
+                is_deleted = #{isDeleted},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+    <select id="getLists" resultType="com.hp.server.dto.BasicEquipmentDTO">
+        select * from basic_equipment where is_deleted = 0
+        <if test="id != null">
+           and  id = #{id}
+        </if>
+        <if test="companyId != null">
+            and company_id = #{companyId}
+        </if>
+        <if test="equipmentType != null">
+           and equipment_type = #{equipmentType}
+        </if>
+    </select>
+</mapper>

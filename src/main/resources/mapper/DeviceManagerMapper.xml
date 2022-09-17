@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hp.server.dao.DeviceManagerMapper">
+    <insert id="saveDevice">
+        INSERT INTO `device_manage`
+                (`device_code`, `device_name`, `device_type`, `community`, `unit_infor`, `company_id`, `status`,
+                 `region_id`, `tower_id`, `cell_id`, `group_id`, `site_id`, `unit_id`, `imei`, `product_type`, `ap_code`)
+        VALUES (#{deviceCode},#{deviceName},#{deviceType},#{community},#{unitInfor},#{companyId},#{status},
+                #{regionId},#{towerId},#{cellId},#{groupId},#{siteId},#{unitId},#{imei},#{productType},#{apCode})
+
+    </insert>
+    <!--    更新机组设备-->
+    <update id="updateDevice" parameterType="com.hp.server.vo.DeviceManagerVo">
+        update device_manage set cell_id = #{cellId} , unit_id = #{unitId} , region_id = #{regionId} ,
+        tower_id = #{towerId}
+        , group_id = #{groupId} , site_id = #{siteId}
+        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(deviceName)">
+            , device_name = #{deviceName}
+        </if>
+        where id = #{id}
+    </update>
+    <!--    逻辑删除机组信息-->
+    <update id="delDevice">
+        update device_manage set is_deleted = 1 where id = #{id}
+    </update>
+
+    <!--    分页查询设备列表-->
+    <select id="getDevice" resultType="com.hp.server.vo.DeviceManagerVo"
+            parameterType="com.hp.server.dto.DeviceManagerDTO">
+        SELECT
+        status,
+        dm.id,
+        dm.company_id,
+        device_code,
+        device_name,
+        device_type,
+        br.region, bt.tower, bc.cell ,
+        bg.groups, bs.site, bu.unit ,
+        dm.create_time,
+        CONCAT( bc.id, ':cellId' ) cellId,
+        CONCAT( br.id, ':regionId' ) regionId,
+        CONCAT( bt.id, ':towerId' ) towerId,
+        CONCAT( bg.id, ':groupId' ) groupId,
+        CONCAT( bs.id, ':siteId' ) siteId,
+        CONCAT( bu.id, ':unitId' ) unitId,
+        community communityId,
+        unit_infor uniInforId,
+        dm.product_type,
+        ap_code apCode
+
+        FROM
+        device_manage dm
+        LEFT JOIN basic_cell bc ON dm.cell_id = bc.id
+        LEFT JOIN basic_tower bt ON dm.tower_id = bt.id
+        LEFT JOIN basic_region br ON dm.region_id = br.id
+        LEFT JOIN basic_unit bu ON dm.unit_id = bu.id
+        LEFT JOIN basic_site bs ON dm.site_id = bs.id
+        LEFT JOIN basic_group bg ON dm.group_id = bg.id
+        WHERE 1=1
+        <if test="companyId != null">
+            and dm.company_id = #{companyId}
+        </if>
+        <if test="regionId == 0">
+            and br.id is null
+        </if>
+        <if test="regionId > 0">
+            and br.id = #{regionId}
+        </if>
+        <if test="towerId != null">
+            and bt.id = #{towerId}
+        </if>
+        <if test="cellId != null">
+            and bc.id = #{cellId}
+        </if>
+        <if test="groupId == 0">
+            and bg.id is null
+        </if>
+        <if test="groupId > 0">
+            and bg.id = #{groupId}
+        </if>
+        <if test="siteId != null">
+            and bs.id = #{siteId}
+        </if>
+        <if test="unitId != null">
+            and bu.id = #{unitId}
+        </if>
+        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(deviceName)">
+            and device_name like CONCAT('%', #{deviceName}, '%')
+        </if>
+        order by dm.create_time desc
+    </select>
+    <!--    获取关联小区id-->
+    <select id="getRegionId" resultType="java.lang.Long">
+        select region_id from basic_tower where id = #{towerId}
+    </select>
+    <!--    查询关联楼宇id-->
+    <select id="getTowerId" resultType="java.lang.Long">
+        select tower_id from basic_cell where id = #{cellId}
+    </select>
+    <!--    查询关联分组id-->
+    <select id="getGroupId" resultType="java.lang.Long">
+        select group_id from basic_site where id = #{siteId}
+    </select>
+    <!--    关联查询热换站id-->
+    <select id="getSiteId" resultType="java.lang.Long">
+        select site_id from basic_unit where id = #{unitId}
+    </select>
+    <!--更新设备状态-->
+    <update id="updateDeviceStatus" parameterType="Object">
+        update device_manage
+        set
+            status = #{status}
+        where imei = #{imei}
+    </update>
+    <!--根据imei查询设备信息-->
+    <select id="getDeviceByImei" parameterType="String" resultType="com.hp.server.vo.DeviceManagerVo">
+        select
+            company_id as companyId
+        from device_manage
+        where imei = #{imei}
+    </select>
+</mapper>

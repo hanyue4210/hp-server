@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hp.server.dao.SysUserMapper">
+    <!--根据登录名查询用户信息-->
+    <select id="findByLoginName" parameterType="String" resultType="com.hp.server.entity.SysUser">
+        select
+            su.id,
+            su.login_name as loginName,
+            su.password,
+            su.user_name as userName,
+            su.is_deleted as isDeleted
+        from sys_user su
+        where 1 = 1
+        and su.login_name  = #{loginName}
+    </select>
+    <!--根据用户ID查询用户拥有菜单-->
+    <select id="listSysMenu" parameterType="Long" resultType="com.hp.server.entity.SysMenu">
+        select
+            sm.id,
+            sm.menu_name as menuName,
+            sm.menu_key as menuKey,
+            sm.parent_id as parentId,
+            sm.menu_level as menuLevel,
+            sm.sort
+        from sys_user_menu um
+        left join sys_menu sm on sm.id = um.menu_id
+        where 1 = 1
+        and um.user_id  = #{userId}
+        order by sm.sort asc
+    </select>
+    <!--根据菜单ID查询菜单-->
+    <select id="getSysMenuById" parameterType="Long" resultType="com.hp.server.entity.SysMenu">
+        select
+            sm.id,
+            sm.menu_name as menuName,
+            sm.menu_key as menuKey,
+            sm.parent_id as parentId,
+            sm.menu_level as menuLevel,
+            sm.sort
+        from sys_menu sm
+        where 1 = 1
+        and sm.id  = #{id}
+    </select>
+    <!--根据用户ID查询用户拥有菜单-->
+    <select id="listSysButton" parameterType="Long" resultType="com.hp.server.entity.SysButton">
+        select
+            sb.id,
+            sb.button_name as buttonName,
+            sb.button_key as buttonKey,
+            sb.menu_key as menuKey,
+            sb.sort
+        from sys_user_button ub
+        left join sys_button sb on sb.id = ub.button_id
+        where 1 = 1
+        and ub.user_id  = #{userId}
+        order by sb.sort asc
+    </select>
+    <!--根据条件查询用户列表-->
+    <select id="listSysUser" parameterType="com.hp.server.dto.SysUserQueryDTO" resultType="com.hp.server.vo.SysUserVo">
+        select
+            su.id,
+            su.login_name as loginName,
+            su.user_name as userName,
+            su.mobile,
+            su.user_type as userType
+        from sys_user su
+        where 1 = 1
+        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(userName)">
+            and su.user_name like CONCAT('%', #{userName}, '%')
+        </if>
+        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(userType)">
+            and su.user_type = #{userType}
+        </if>
+        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(menuIds)">
+            and find_in_set(#{projectId}, menuIds)
+        </if>
+    </select>
+</mapper>

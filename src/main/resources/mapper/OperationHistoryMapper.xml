@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hp.server.dao.OperationHistoryMapper">
+
+
+    <!--    分页查询历史数据-->
+    <select id="getOperationHistory" resultType="com.hp.server.dto.OperationHistoryDTO"
+            parameterType="com.hp.server.dto.OperationHistoryDTO">
+        SELECT DISTINCT
+        dm.device_code, dm.device_name, CONCAT( br.region, '/', bt.tower, '/', bc.cell ) community, CONCAT( bg.groups,
+        '/', bs.site, '/', bu.unit ) unit_infor, dm.create_time
+        FROM
+        device_manage dm
+        LEFT JOIN operation_history h ON dm.device_code = h.device_code
+        LEFT JOIN basic_cell bc ON dm.community = bc.id
+        LEFT JOIN basic_tower bt ON bc.tower_id = bt.id
+        LEFT JOIN basic_region br ON bt.region_id = br.id
+        LEFT JOIN basic_unit bu ON dm.unit_infor = bu.id
+        LEFT JOIN basic_site bs ON bu.site_id = bs.id
+        LEFT JOIN basic_group bg ON bs.group_id = bg.id
+        WHERE
+        dm.company_id = #{companyId}
+        <if test="regionId != null">
+            and br.id = #{regionId}
+        </if>
+        <if test="towerId != null">
+            and bt.id = #{towerId}
+        </if>
+        <if test="cellId != null">
+            and bc.id = #{cellId}
+        </if>
+        <if test="groupId != null">
+            and bg.id = #{groupId}
+        </if>
+        <if test="siteId != null">
+            and bs.id = #{siteId}
+        </if>
+        <if test="unitId != null">
+            and bu.id = #{unitId}
+        </if>
+        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(deviceName)">
+            and dm.device_name = #{deviceName}
+        </if>
+        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(deviceCode)">
+            and dm.device_code = #{deviceCode}
+        </if>
+    </select>
+    <!--    查询历史详情-->
+    <select id="getDetail" resultType="com.hp.server.vo.OperationHistoryVo"
+            parameterType="com.hp.server.dto.OperationHistoryDTO">
+        SELECT * from operation_history where device_code = #{deviceCode}
+        <if test="startTime != null">
+            and DATE_FORMAT(create_time,'%y%m%d/%H:%i:%S') >= DATE_FORMAT(#{startTime},'%y%m%d/%H:%i:%S')
+        </if>
+        <if test="endTime != null">
+            <![CDATA[
+			and DATE_FORMAT(create_time,'%y%m%d/%H:%i:%S') <= DATE_FORMAT(#{endTime},'%y%m%d/%H:%i:%S')
+			]]>
+        </if>
+        ORDER BY create_time desc
+    </select>
+    <select id="getId" resultType="com.hp.server.vo.OperationHistoryVo">
+         SELECT *, ABS( #{date} - `at` ) AS diff FROM operation_history where device_code = #{deviceCode} ORDER BY diff asc LIMIT 0,1
+    </select>
+</mapper>

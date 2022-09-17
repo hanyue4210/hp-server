@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hp.server.dao.BasicMapper">
+
+    <!-- 新增小区-->
+    <insert id="saveRegion" parameterType="com.hp.server.vo.BasicRegionVo">
+        INSERT INTO `basic_region`(`region`, `create_time`,`company_id`) VALUES (#{region},now(),#{companyId})
+    </insert>
+    <!--更新小区-->
+    <update id="updateRegion" parameterType="com.hp.server.vo.BasicRegionVo">
+        UPDATE `basic_region` SET `region` = #{region} WHERE `id` = #{id}
+    </update>
+    <!--逻辑删除小区-->
+    <update id="deleteRegion">
+        UPDATE `basic_region` SET `is_deleted` = 1 WHERE `id` = #{id}
+    </update>
+    <!--    按小区批量删除楼宇-->
+    <update id="deleteTowers">
+        update basic_tower SET is_deleted = 1 where region_id = #{regionId}
+    </update>
+    <!--    按楼宇批量删除-->
+    <update id="deleteCells">
+        update basic_cell SET is_deleted = 1 where tower_id = #{towerId}
+    </update>
+    <!--    逻辑删除机组信息-->
+    <update id="delUnit">
+        update basic_unit set is_deleted = 1 where id = #{id}
+    </update>
+    <!--    批量删除机组信息-->
+    <update id="delUnits">
+        update basic_unit set is_deleted = 1 where site_id = #{id}
+    </update>
+    <!-- 获取小区列表-->
+    <select id="getRegion" resultType="com.hp.server.dto.BasicRegionDTO">
+        select * from `basic_region` where is_deleted = 0 and company_id = #{companyId} order by create_time desc
+    </select>
+    <!--新增楼宇-->
+    <insert id="saveTower" parameterType="com.hp.server.vo.BasicTowerVo">
+        INSERT INTO `basic_tower`(`region_id`, `tower`, `create_time`,`company_id`)
+        VALUES (#{regionId},#{tower},now(),#{companyId})
+    </insert>
+    <!--获取楼宇列表-->
+    <select id="getTower" resultType="com.hp.server.dto.BasicTowerDTO">
+        select bt.id,bt.region_id regionId,bt.tower,bt.create_time createTime,br.region,bt.company_id from `basic_tower`
+        bt
+        left join `basic_region` br on bt.region_id = br.id
+        where bt.is_deleted = 0 and bt.company_id = #{companyId} and br.is_deleted = 0
+        <if test="regionId != null">
+            and br.id = #{regionId}
+        </if>
+        order by bt.create_time desc
+    </select>
+    <!--更新楼宇-->
+    <update id="updateTower" parameterType="com.hp.server.vo.BasicTowerVo">
+        UPDATE `basic_tower` SET  `tower` = #{tower} WHERE `id` = #{id}
+    </update>
+    <!--逻辑删除楼宇-->
+    <update id="deleteTower">
+        UPDATE `basic_tower` SET  `is_deleted` = 1 WHERE `id` = #{id}
+    </update>
+    <!--新增单元-->
+    <insert id="saveCell" parameterType="com.hp.server.vo.BasicCellVo">
+        INSERT INTO `basic_cell`(`tower_id`, `cell`, `create_time`,`company_id`)
+        VALUES (#{towerId},#{cell},now(),#{companyId})
+    </insert>
+    <!--新建分组-->
+    <insert id="saveGroup">
+        INSERT INTO `basic_group`(`groups`, `create_time`, `company_id`)
+        VALUES (#{groups},now(),#{companyId})
+    </insert>
+    <!--    保存热换站-->
+    <insert id="saveSuit" parameterType="com.hp.server.vo.BasicSiteVo">
+        INSERT INTO `basic_site`(`group_id`, `site`, `create_time`,`company_id`)
+        VALUES (#{groupId},#{site},now(),#{companyId})
+    </insert>
+    <!--    新增机组-->
+    <insert id="saveUnit" parameterType="com.hp.server.vo.BasicUnitVo">
+        INSERT INTO `basic_unit`(`site_id`, `unit`, `create_time`, `company_id`,`factory`, `type`, `power`, `diameter1`, `diameter2`, `plate_area`, `exchange_rate`, `region_describe`)
+                         VALUES (#{siteId},#{unit},now(),#{companyId}, #{factory}, #{type}, #{power}, #{diameter1}, #{diameter2}, #{plateArea}, #{exchangeRate}, #{regionDescribe})
+    </insert>
+    <!--获取单元列表-->
+    <select id="getCell" resultType="com.hp.server.dto.BasicCellDTO">
+        select bc.id,bc.tower_id towerId,bc.cell,bc.create_time createTime,bt.tower,br.region,bc.company_id,bt.region_id
+        from `basic_cell` bc
+        left join `basic_tower` bt on bc.tower_id = bt.id
+        LEFT JOIN basic_region br ON bt.region_id = br.id
+        where bc.is_deleted = 0 and bc.company_id = #{companyId} and br.is_deleted = 0 and bt.is_deleted = 0
+        <if test="towerId != null">
+            and bt.id = #{towerId}
+        </if>
+        <if test="regionId != null">
+            and br.id = #{regionId}
+        </if>
+        order by bc.create_time desc
+    </select>
+    <!--查询楼宇数量-->
+    <select id="countTower" resultType="java.lang.Integer" parameterType="com.hp.server.vo.BasicTowerVo">
+        select id from basic_tower where tower = #{tower} and company_id = #{companyId} and is_deleted = 0 and region_id = #{regionId}
+    </select>
+    <!--查查某个楼宇里单元总数-->
+    <select id="countCells" resultType="java.lang.Integer">
+        select count(id) from basic_cell where tower_id = #{towerId} and is_deleted = 0
+    </select>
+    <!--查询小区楼宇数量-->
+    <select id="countTowers" resultType="java.lang.Integer">
+        select count(id) from basic_tower where region_id = #{id} and is_deleted = 0
+    </select>
+    <!--    分页查询分组列表-->
+    <select id="getGroup" resultType="com.hp.server.dto.BasicGroupDTO">
+    select * from basic_group where is_deleted = 0 and company_id = #{companyId} order by create_time desc
+    </select>
+    <!--    批量查询同名分组数量-->
+    <select id="countGroup" resultType="java.lang.Integer">
+        select count(id) from basic_group where groups = #{groups} and company_id = #{companyId} and is_deleted = 0
+    </select>
+    <!--    分页查询热换站-->
+    <select id="getSite" resultType="com.hp.server.dto.BasicSiteDTO">
+        SELECT bs.id,bs.group_id, bs.site, bs.create_time, bs.company_id, bg.groups
+        FROM basic_site bs LEFT JOIN basic_group bg ON bs.group_id = bg.id
+        WHERE bs.is_deleted = 0 and bs.company_id = #{companyId} and bg.is_deleted = 0
+        <if test="groupId != null">
+            and bg.id = #{groupId}
+        </if>
+        order by bs.create_time desc
+    </select>
+    <!--    查询同名热换站数量-->
+    <select id="countSite" resultType="java.lang.Integer" parameterType="com.hp.server.vo.BasicSiteVo">
+        select count(id) from basic_site where site = #{site} and company_id = #{companyId} and is_deleted = 0 and group_id = #{groupId}
+    </select>
+    <!--    分页查询机组信息-->
+    <select id="getUnit" resultType="com.hp.server.dto.BasicUnitDTO">
+        SELECT bu.id, bu.site_id, unit, bu.company_id, bu.create_time, bs.site, bs.group_id, bg.groups, factory, type,
+        power, diameter1, diameter2,
+        plate_area, exchange_rate, region_describe FROM
+        basic_unit bu
+        LEFT JOIN basic_site bs ON bu.site_id = bs.id
+        LEFT JOIN basic_group bg ON bs.group_id = bg.id
+        where bu.is_deleted = 0 and bu.company_id = #{companyId} and bg.is_deleted = 0 and bs.is_deleted = 0
+        <if test="siteId != null">
+            and bs.id = #{siteId}
+        </if>
+        <if test="groupId != null">
+            and bg.id = #{groupId}
+        </if>
+        order by bu.create_time desc
+    </select>
+    <!--    查询小区-->
+    <select id="regionName" resultType="java.lang.String">
+        select id from basic_region where company_id = #{companyId} and region = #{region} and is_deleted = 0
+    </select>
+    <!--    查询楼宇id-->
+    <select id="towerId" resultType="java.lang.String">
+        select id from basic_tower where tower = #{tower} and company_id = #{companyId} and is_deleted = 0 and region_id = #{regionId}
+    </select>
+    <!--    查询单元名称-->
+    <select id="cellName" resultType="java.lang.String">
+        select bc.cell from basic_cell bc
+        left join `basic_tower` bt on bc.tower_id = bt.id
+         where bc.company_id = #{companyId} and cell = #{cell} and bc.is_deleted = 0
+         and tower_id = #{towerId} and bt.region_id = #{regionId}
+    </select>
+    <!--    查询单元名称-->
+    <select id="cellNameId" resultType="java.lang.String">
+        select bc.id from basic_cell bc
+        left join `basic_tower` bt on bc.tower_id = bt.id
+         where bc.company_id = #{companyId} and cell = #{cell} and bc.is_deleted = 0
+         and tower_id = #{towerId} and bt.region_id = #{regionId}
+    </select>
+    <!--    查询分组id-->
+    <select id="getGroupId" resultType="java.lang.String">
+        select id from basic_group where company_id = #{companyId} and groups = #{groups} and is_deleted = 0
+    </select>
+    <!--    获取热换站id-->
+    <select id="getSiteId" resultType="java.lang.String">
+        select id from basic_site where company_id = #{companyId} and site = #{site} and is_deleted = 0 and group_id = #{groupId}
+    </select>
+    <!--    获取机组id-->
+    <select id="getUnitId" resultType="java.lang.String">
+        select bu.id from basic_unit bu LEFT JOIN basic_site bs ON bu.site_id = bs.id
+         where bu.company_id = #{companyId} and unit = #{unit} and bu.is_deleted = 0
+         and bu.site_id = #{siteId} and bs.group_id = #{groupId}
+    </select>
+    <!--    查询分组下热换站-->
+    <select id="countSites" resultType="java.lang.Integer">
+        select count(id) from basic_site where group_id = #{id} and is_deleted = 0
+    </select>
+    <!--    根据机组名称查询是否重复-->
+    <select id="countUnit" resultType="java.lang.Integer">
+        select count(bu.id) from basic_unit bu  LEFT JOIN basic_site bs ON bu.site_id = bs.id
+        where unit = #{unit} and bu.company_id = #{companyId} and bu.is_deleted = 0
+        and bu.site_id = #{siteId} and bs.group_id = #{groupId}
+    </select>
+    <!--    查询热换站内机组数量-->
+    <select id="countUnits" resultType="java.lang.Integer">
+        select count(id) from basic_unit where site_id = #{id} and is_deleted = 0
+    </select>
+    <!--    小区树形结构下拉框-->
+    <select id="getRegionTree" resultType="com.hp.server.vo.BasicRegionVo">
+        select * from basic_region where company_id = #{companyId} and is_deleted = 0
+    </select>
+    <!--    小区树形结构下拉框-->
+    <select id="getTowerTree" resultType="com.hp.server.vo.BasicTowerVo">
+        select * from basic_tower where region_id = #{regionId} and is_deleted = 0
+    </select>
+    <!--    小区树形结构下拉框-->
+    <select id="getCellTree" resultType="com.hp.server.vo.BasicCellVo">
+        select * from basic_cell where tower_id = #{towerId} and is_deleted = 0
+    </select>
+    <!--    机组树形结构下拉框-->
+    <select id="getGroupTree" resultType="com.hp.server.vo.BasicGroupVo">
+        select * from basic_group where company_id = #{companyId} and is_deleted = 0
+    </select>
+    <!--    机组树形结构下拉框-->
+    <select id="getSiteTree" resultType="com.hp.server.vo.BasicSiteVo">
+        select * from basic_site where group_id = #{groupId} and is_deleted = 0
+    </select>
+    <!--    机组树形结构下拉框-->
+    <select id="getRegionList" resultType="com.hp.server.vo.BasicRegionVo">
+        select * from basic_region where company_id = #{companyId} and is_deleted = 0
+    </select>
+    <!--    楼宇集合-->
+    <select id="getTowerList" resultType="com.hp.server.vo.BasicTowerVo">
+        select * from basic_tower where company_id = #{companyId} and is_deleted = 0
+    </select>
+    <!--    分组集合-->
+    <select id="getGroupList" resultType="com.hp.server.vo.BasicGroupVo">
+        select * from basic_group where company_id = #{companyId} and is_deleted = 0
+    </select>
+    <!--    热换站集合-->
+    <select id="getSiteList" resultType="com.hp.server.vo.BasicSiteVo">
+        select * from basic_site where company_id = #{companyId} and is_deleted = 0
+    </select>
+    <!--    机组树形结构下拉框-->
+    <select id="getUnitTree" resultType="com.hp.server.vo.BasicUnitVo">
+        select * from basic_unit where site_id = #{siteId} and is_deleted = 0
+    </select>
+    <!--根据条件查询客户档案列表-->
+    <select id="listBasicClient" resultType="com.hp.server.vo.BasicClientVo">
+        select
+            bc.id,
+            bc.client_code as clientCode,
+            bc.client_name as clientName,
+            bc.province,
+            bc.city,
+            bc.district,
+            bc.contacts,
+            bc.phone,
+            bc.validity,
+            bc.establish_time as establishTime
+        from basic_client bc
+        where 1 = 1
+        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(clientCode)">
+            and bc.client_code = #{clientCode}
+        </if>
+        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(clientName)">
+            and bc.client_name = #{clientName}
+        </if>
+        <if test="establishTimeStart != null">
+            and DATE_FORMAT(bc.establish_time,'%y%m%d/%H:%i:%S') >= DATE_FORMAT(#{establishTimeStart},'%y%m%d/%H:%i:%S')
+        </if>
+        <if test="establishTimeEnd != null">
+            <![CDATA[
+			and DATE_FORMAT(bc.establish_time,'%y%m%d/%H:%i:%S') <= DATE_FORMAT(#{establishTimeEnd},'%y%m%d/%H:%i:%S')
+			]]>
+        </if>
+        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(province)">
+            and bc.province = #{province}
+        </if>
+        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(city)">
+            and bc.city = #{city}
+        </if>
+        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(district)">
+            and bc.district = #{district}
+        </if>
+        order by bc.establish_time desc
+    </select>
+    <!--更新单元-->
+    <update id="updateCell">
+        UPDATE `basic_cell` SET `cell` = #{cell} WHERE `id` = #{id}
+    </update>
+    <!--    更新分组-->
+    <update id="updateGroup">
+        update basic_group set groups = #{groups} where id = #{id}
+    </update>
+    <!--    更新热换站-->
+    <update id="updateSite">
+        update basic_site set site = #{site} where id = #{id}
+    </update>
+    <!--查查某个楼宇里单元总数-->
+    <update id="deleteCell">
+        UPDATE `basic_cell` SET `is_deleted` = 1 WHERE `id` = #{id}
+    </update>
+    <!--    逻辑删除分组-->
+    <update id="deleteGroup">
+        UPDATE `basic_group` SET `is_deleted` = 1 WHERE `id` = #{id}
+    </update>
+    <!--    逻辑删除热换站-->
+    <update id="deleteSite">
+        update basic_site set `is_deleted` = 1 WHERE `id` = #{id}
+    </update>
+    <update id="deleteSites">
+         UPDATE `basic_site` SET `is_deleted` = 1 WHERE `group_id` = #{id}
+    </update>
+    <!--    更新机组信息-->
+    <update id="updateUnit">
+        update basic_unit set unit = #{unit},`factory` = #{factory}, `type` = #{type}, `power` = #{power},
+         `diameter1` = #{diameter1}, `diameter2` = #{diameter2}, `plate_area` = #{plateArea},
+         `exchange_rate` = #{exchangeRate}, `region_describe` = #{regionDescribe}
+        where id = #{id}
+    </update>
+</mapper>

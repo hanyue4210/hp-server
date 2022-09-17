@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hp.server.dao.ApManagerMapper">
+
+    <insert id="save">
+        INSERT INTO `ap_manager`(`create_time`, `company_id`, `ap_code`, `ap_name`, `imei`, `imei_code`, `status`, `take_status`,`remarks`)
+         VALUES (now(),#{companyId},#{apCode},#{apName},#{imei},#{imeiCode},#{status},#{takeStatus},#{remarks})
+    </insert>
+    <update id="update">
+        UPDATE `ap_manager`
+        <set>
+            <if test="companyId != null">
+                company_id = #{companyId},
+            </if>
+            <if test="apName != null">
+                ap_name = #{apName},
+            </if>
+            <if test="isDeleted != null">
+                is_deleted = #{isDeleted},
+            </if>
+            <if test="remarks !=null">
+                remarks = #{remarks},
+            </if>
+        </set>
+        WHERE `id` = #{id}
+    </update>
+    <select id="getLists" resultType="com.hp.server.dto.ApManagerDTO">
+        select * from ap_manager where is_deleted = 0
+        <if test="companyId != null">
+            and company_id = #{companyId}
+        </if>
+        <if test="apName != null">
+            and ap_name = #{apName},
+        </if>
+        <if test="status != null">
+            and status = #{status}
+        </if>
+        <if test="imeiCode != null">
+            and imei_code = #{imeiCode}
+        </if>
+        <if test="id != null">
+            and id = #{id}
+        </if>
+    </select>
+</mapper>

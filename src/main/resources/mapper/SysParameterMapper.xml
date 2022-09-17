@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hp.server.dao.SysParameterMapper">
+    <!--查询参数设置-->
+    <select id="getSysParameter" parameterType="Long" resultType="com.hp.server.vo.SysParameterVo">
+        select
+            sp.id,
+            sp.work_mode as workMode,
+            sp.request_frequency as requestFrequency
+        from sys_parameter sp
+        where sp.company_id = #{companyId}
+    </select>
+    <!--更新参数设置-->
+    <update id="updateSysParamter" parameterType="com.hp.server.dto.SysParameterDTO">
+        update sys_parameter
+        set
+            work_mode = #{workMode},
+            request_frequency = #{requestFrequency}
+        where id = #{id}
+    </update>
+    <!--新增参数设置-->
+    <insert id="saveSysParamter" parameterType="com.hp.server.dto.SysParameterDTO">
+        insert into
+            sys_parameter
+            (
+              work_mode,
+              request_frequency,
+              company_id,
+              create_time
+            )
+            values
+            (
+              #{workMode},
+              #{requestFrequency},
+              #{companyId},
+              now()
+            )
+    </insert>
+
+</mapper>

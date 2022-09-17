@@ -1,0 +1,548 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hp.server.dao.OperationMapper">
+    <!--根据条件查询控制策略列表-->
+    <select id="listOperationControl" parameterType="com.hp.server.dto.OperationQueryDTO" resultType="com.hp.server.vo.OperationControlVo">
+        SELECT
+            oc.id,
+            dm.device_code as deviceCode,
+            dm.device_Type as deviceType,
+            br.region,
+            bt.tower,
+            bc.cell,
+            bg.groups,
+            bs.site,
+            bu.unit,
+            CONCAT( bc.id, ':cellId' ) cellId,
+            CONCAT( br.id, ':regionId' ) regionId,
+            CONCAT( bt.id, ':towerId' ) towerId,
+            CONCAT( bg.id, ':groupId' ) groupId,
+            CONCAT( bs.id, ':siteId' ) siteId,
+            CONCAT( bu.id, ':unitId' ) unitId,
+            dm.community as communityId,
+            dm. unit_infor as uniInforId,
+            oc.control_mode as controlMode,
+            oc.target_value as targetValue,
+            oc.actual_value as actualValue,
+            oc.entering_water_temp as enteringWaterTemp,
+            oc.return_water_temp as returnWaterTemp,
+            oc.valve_opening as valveOpening,
+            oc.entering_water_press as enteringWaterPress,
+            oc.return_water_press as returnWaterPress,
+            oc.generating_voltage as generatingVoltage,
+            oc.battery_voltage as batteryVoltage,
+            oc.overall_comp_temp as overallCompTemp,
+            oc.individual_comp_temp as individualCompTemp,
+            oc.climate_comp_coefficient as climateCompCoefficient,
+            oc.mode_status as modeStatus,
+            oc.flow,
+            oc.water_press_differ as waterPressDiffer,
+            oc.total_heat as totalHeat,
+            oc.outdoor_temp as outdoorTemp,
+            oc.imei,
+            SUBSTRING_INDEX(oc.ds_id, '_', 1) as objId,
+            SUBSTRING_INDEX(SUBSTRING_INDEX(oc.ds_id, '_', 2), '_', -1) as objInstId,
+            oc.put_down_status as putDownStatus,
+            oc.update_time as updateTime
+        FROM
+            operation_control oc
+        LEFT JOIN device_manage dm ON dm.device_code = oc.device_code
+        LEFT JOIN basic_cell bc ON dm.cell_id = bc.id
+        LEFT JOIN basic_tower bt ON dm.tower_id = bt.id
+        LEFT JOIN basic_region br ON dm.region_id = br.id
+        LEFT JOIN basic_unit bu ON dm.unit_infor = bu.id
+        LEFT JOIN basic_site bs ON dm.site_id = bs.id
+        LEFT JOIN basic_group bg ON dm.group_id = bg.id
+        WHERE 1 = 1
+        and oc.device_code is not null
+        <if test="companyId != null">
+            and dm.company_id = #{companyId}
+        </if>
+        <if test="regionId != null">
+            and br.id = #{regionId}
+        </if>
+        <if test="towerId != null">
+            and bt.id = #{towerId}
+        </if>
+        <if test="cellId != null">
+            and bc.id = #{cellId}
+        </if>
+        <if test="groupId != null">
+            and bg.id = #{groupId}
+        </if>
+        <if test="siteId != null">
+            and bs.id = #{siteId}
+        </if>
+        <if test="unitId != null">
+            and bu.id = #{unitId}
+        </if>
+        <if test="productType != null">
+            and dm.product_type = #{productType}
+        </if>
+
+    </select>
+    <!--保存历史记录-->
+    <insert id="saveOperationHistory" parameterType="com.hp.server.entity.OperationHistory">
+        insert into
+            operation_history
+            (
+            device_code,
+            control_mode,
+            target_value,
+            actual_value,
+            entering_water_temp,
+            return_water_temp,
+            valve_opening,
+            entering_water_press,
+            return_water_press,
+            generating_voltage,
+            battery_voltage,
+            overall_comp_temp,
+            individual_comp_temp,
+            climate_comp_coefficient,
+            mode_status,
+            flow,
+            water_press_differ,
+            total_heat,
+            outdoor_temp,
+            create_time,
+            `at`,
+            imei,
+            `type`,
+            ds_id,
+            dev_id
+            )
+        values
+            (
+            #{deviceCode},
+            #{controlMode},
+            #{targetValue},
+            #{actualValue},
+            #{enteringWaterTemp},
+            #{returnWaterTemp},
+            #{valveOpening},
+            #{enteringWaterPress},
+            #{returnWaterPress},
+            #{generatingVoltage},
+            #{batteryVoltage},
+            #{overallCompTemp},
+            #{individualCompTemp},
+            #{climateCompCoefficient},
+            #{modeStatus},
+            #{flow},
+            #{waterPressDiffer},
+            #{totalHeat},
+            #{outdoorTemp},
+            now(),
+            #{at},
+            #{imei},
+            #{type},
+            #{dsId},
+            #{devId}
+            )
+    </insert>
+    <!--更新当前运行数据-->
+    <update id="updateOperation" parameterType="com.hp.server.entity.OperationHistory">
+        update operation_control
+        <set>
+            <if test="deviceCode != null and deviceCode != ''" >
+                device_code = #{deviceCode},
+            </if>
+            <if test="controlMode != null" >
+                control_mode = #{controlMode},
+            </if>
+            <if test="targetValue != null" >
+                target_value = #{targetValue},
+            </if>
+            <if test="actualValue != null" >
+                actual_value = #{actualValue},
+            </if>
+            <if test="enteringWaterTemp != null" >
+                entering_water_temp = #{enteringWaterTemp},
+            </if>
+            <if test="returnWaterTemp != null" >
+                return_water_temp = #{returnWaterTemp},
+            </if>
+            <if test="valveOpening != null" >
+                valve_opening = #{valveOpening},
+            </if>
+            <if test="enteringWaterPress != null" >
+                entering_water_press = #{enteringWaterPress},
+            </if>
+            <if test="returnWaterPress != null" >
+                return_water_press = #{returnWaterPress},
+            </if>
+            <if test="generatingVoltage != null" >
+                generating_voltage = #{generatingVoltage},
+            </if>
+            <if test="batteryVoltage != null" >
+                battery_voltage = #{batteryVoltage},
+            </if>
+            <if test="overallCompTemp != null" >
+                overall_comp_temp = #{overallCompTemp},
+            </if>
+            <if test="individualCompTemp != null" >
+                individual_comp_temp = #{individualCompTemp},
+            </if>
+            <if test="climateCompCoefficient != null" >
+                climate_comp_coefficient = #{climateCompCoefficient},
+            </if>
+            <if test="modeStatus != null" >
+                mode_status = #{modeStatus},
+            </if>
+            <if test="flow != null" >
+                flow = #{flow},
+            </if>
+            <if test="waterPressDiffer != null" >
+                water_press_differ = #{waterPressDiffer},
+            </if>
+            <if test="totalHeat != null" >
+                total_heat = #{totalHeat},
+            </if>
+            <if test="outdoorTemp != null" >
+                outdoor_temp = #{outdoorTemp},
+            </if>
+        </set>
+        where imei = #{imei}
+
+
+    </update>
+    <!--根据imei获取当前数据-->
+    <select id="getOperationControl" parameterType="String" resultType="com.hp.server.entity.OperationControl">
+        select
+            id,
+            control_mode as controlMode,
+            overall_comp_temp as overallCompTemp,
+            individual_comp_temp as individualCompTemp,
+            climate_comp_coefficient as climateCompCoefficient,
+            outdoor_temp as outdoorTemp
+        from operation_control
+        where imei = #{imei}
+    </select>
+    <!--保存当前运行数据-->
+    <insert id="saveOperation" parameterType="com.hp.server.entity.OperationControl">
+        insert into
+            operation_control
+            (
+            device_code,
+            control_mode,
+            target_value,
+            actual_value,
+            entering_water_temp,
+            return_water_temp,
+            valve_opening,
+            entering_water_press,
+            return_water_press,
+            generating_voltage,
+            battery_voltage,
+            overall_comp_temp,
+            individual_comp_temp,
+            climate_comp_coefficient,
+            mode_status,
+            flow,
+            water_press_differ,
+            total_heat,
+            outdoor_temp,
+            create_time,
+            imei,
+            ds_id
+            )
+        values
+            (
+            #{deviceCode},
+            #{controlMode},
+            #{targetValue},
+            #{actualValue},
+            #{enteringWaterTemp},
+            #{returnWaterTemp},
+            #{valveOpening},
+            #{enteringWaterPress},
+            #{returnWaterPress},
+            #{generatingVoltage},
+            #{batteryVoltage},
+            #{overallCompTemp},
+            #{individualCompTemp},
+            #{climateCompCoefficient},
+            #{modeStatus},
+            #{waterPressDiffer},
+            #{totalHeat},
+            #{outdoorTemp},
+            #{flow},
+            now(),
+            #{imei},
+            #{dsId}
+            )
+    </insert>
+    <!--查询定时任务列表-->
+    <select id="listOperationSchedule" parameterType="com.hp.server.dto.OperationScheduleQueryDTO" resultType="com.hp.server.vo.OperationScheduleVo">
+        select
+            os.id,
+            os.schedule_name as scheduleName,
+            os.schedule_time as scheduleTime,
+            os.control_mode as controlMode,
+            os.target_value as targetValue,
+            os.overall_comp_temp as overallCompTemp,
+            os.individual_comp_temp as individualCompTemp,
+            os.climate_comp_coefficient as climateCompCoefficient,
+            os.outdoor_temp as outdoorTemp,
+            os.is_repeat as isRepeat,
+            os.weeks
+        from operation_schedule os
+        where 1 = 1
+        <if test="companyId != null">
+            and os.company_id = #{companyId}
+        </if>
+        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(scheduleName)">
+            and os.schedule_name like CONCAT('%', #{scheduleName}, '%')
+        </if>
+        order by create_time desc
+    </select>
+    <!--查询参与定时任务设备-->
+    <select id="listOperationScheduleDeviceName" parameterType="Long" resultType="String">
+        select
+            dm.device_name
+        from operation_schedule_device osd
+        left join device_manage dm dm.id = osd.device_id
+        where 1 = 1
+        and osd.schedule_id = #{id}
+    </select>
+    <!--保存定时任务-->
+    <insert id="saveOperationSchedule" parameterType="com.hp.server.dto.OperationScheduleDTO" useGeneratedKeys="true" keyProperty="id">
+        insert into
+            operation_schedule
+            (
+            schedule_name,
+            schedule_time,
+            control_mode,
+            company_id,
+            outdoor_temp,
+            target_value,
+            overall_comp_temp,
+            individual_comp_temp,
+            climate_comp_coefficient,
+            is_repeat,
+            weeks,
+            create_time
+            )
+        values
+            (
+            #{scheduleName},
+            #{scheduleTime},
+            #{controlMode},
+            #{companyId},
+            #{outdoorTemp},
+            #{targetValue},
+            #{overallCompTemp},
+            #{individualCompTemp},
+            #{climateCompCoefficient},
+            #{isRepeat},
+            #{weeks},
+            now()
+            )
+    </insert>
+    <!--批量创建定时任务关联设备-->
+    <insert id="saveOperationScheduleDevice" parameterType="java.util.List" useGeneratedKeys="true">
+        insert into
+        operation_schedule_device
+        (schedule_id,
+        device_code,
+        create_time
+        )
+        values
+        <foreach collection="list" item="item" index="index"
+                 separator=",">
+            (
+            #{item.scheduleId},
+            #{item.deviceCode},
+            now()
+            )
+        </foreach>
+    </insert>
+    <!--查询定时任务关联设备-->
+    <select id="listOperationScheduleDevice" parameterType="Long" resultType="com.hp.server.vo.OperationScheduleDeviceVo">
+        select
+            osd.id,
+            osd.schedule_id as scheduleId,
+            osd.device_code as deviceCode,
+            dm.device_name as deviceName
+        from operation_schedule_device osd
+        left join device_manage dm on dm.device_code  = osd.device_code
+        where osd.schedule_id = #{scheduleId}
+    </select>
+    <!--根据设备串码查询设备运行信息-->
+    <select id="getOperationControlByDeviceCode" parameterType="String" resultType="com.hp.server.entity.OperationControl">
+        select
+            oc.id,
+            oc.imei,
+            oc.ds_id as dsId,
+            oc.control_mode as controlMode,
+            oc.target_value as targetValue,
+            oc.actual_value as actualValue,
+            oc.entering_water_temp as enteringWaterTemp,
+            oc.return_water_temp as returnWaterTemp,
+            oc.valve_opening as valveOpening,
+            oc.entering_water_press as enteringWaterPress,
+            oc.return_water_press as returnWaterPress,
+            oc.generating_voltage as generatingVoltage,
+            oc.battery_voltage as batteryVoltage,
+            oc.overall_comp_temp as overallCompTemp,
+            oc.individual_comp_temp as individualCompTemp,
+            oc.climate_comp_coefficient as climateCompCoefficient,
+            oc.mode_status as modeStatus,
+            oc.flow,
+            oc.water_press_differ as waterPressDiffer,
+            oc.total_heat as totalHeat,
+            oc.outdoor_temp as outdoorTemp
+        from operation_control oc
+        where oc.device_code = #{deviceCode}
+    </select>
+    <!--查询定时任务资源参数-->
+    <select id="getOperationSchedule" parameterType="Long" resultType="com.hp.server.vo.OperationScheduleVo">
+        select
+            os.id,
+            os.schedule_name as scheduleName,
+            os.schedule_time as scheduleTime,
+            os.control_mode as controlMode,
+            os.target_value as targetValue,
+            os.overall_comp_temp as overallCompTemp,
+            os.individual_comp_temp as individualCompTemp,
+            os.climate_comp_coefficient as climateCompCoefficient,
+            os.outdoor_temp as outdoorTemp,
+            os.is_repeat as isRepeat,
+            os.weeks
+        from operation_schedule os
+        where 1 = 1
+        and os.id = #{scheduleId}
+    </select>
+    <!--修改定时任务-->
+    <update id="updateOperationSchedule" parameterType="com.hp.server.vo.OperationScheduleVo">
+        update operation_schedule
+        <set>
+            <if test="scheduleName != null and scheduleName != ''" >
+                schedule_name = #{scheduleName},
+            </if>
+            <if test="scheduleTime != null" >
+                schedule_time = #{scheduleTime},
+            </if>
+            <if test="controlMode != null" >
+                control_mode = #{controlMode},
+            </if>
+            <if test="outdoorTemp != null" >
+                outdoor_temp = #{outdoorTemp},
+            </if>
+            <if test="targetValue != null" >
+                target_value = #{targetValue},
+            </if>
+            <if test="overallCompTemp != null" >
+                overall_comp_temp = #{overallCompTemp},
+            </if>
+            <if test="individualCompTemp != null" >
+                individual_comp_temp = #{individualCompTemp},
+            </if>
+            <if test="climateCompCoefficient != null" >
+                climate_comp_coefficient = #{climateCompCoefficient},
+            </if>
+            <if test="isRepeat != null" >
+                is_repeat = #{isRepeat},
+            </if>
+            <if test="weeks != null" >
+                weeks = #{weeks},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+    <!--删除关联设备-->
+    <delete id="deleteOperationScheduleDevice" parameterType="Long">
+        delete from operation_schedule_device where schedule_id = #{id}
+    </delete>
+    <!--删除定时任务-->
+    <delete id="deleteOperationSchedule" parameterType="Long">
+        delete from operation_schedule where id = #{id}
+    </delete>
+    <!--更新下发时间-->
+    <update id="updateOperationPutDownTime" parameterType="String">
+        update operation_control
+        set
+            put_down_time = now(),
+            put_down_status = 2
+        where imei = #{imei}
+    </update>
+    <!--更新下发状态-->
+    <update id="updateOperationPutDownStatus" parameterType="String">
+        update operation_control
+        set
+            put_down_status = 1
+        where imei = #{imei}
+    </update>
+    <!--查询表头显示字段列表-->
+    <select id="listOperationColumn" parameterType="Long" resultType="com.hp.server.vo.OperationColumnVo">
+        select
+            id,
+            title,
+            `index`,
+            `width`,
+            sort,
+            is_visible as isVisible
+        from operation_column
+        where 1 = 1
+        <if test="userId != null" >
+            and user_id = #{userId}
+        </if>
+        order by sort asc
+
+    </select>
+    <!--删除改用户表头-->
+    <delete id="deleteOperationColumn" parameterType="Long">
+        delete from operation_column where user_id = #{userId}
+    </delete>
+    <!--批量添加-->
+    <insert id="saveOperationColumnBatch" parameterType="java.util.List" useGeneratedKeys="true">
+        insert into
+        operation_column
+        (title,
+        `index`,
+        `width`,
+        sort,
+        is_visible,
+        user_id,
+        create_time
+        )
+        values
+        <foreach collection="list" item="item" index="index"
+                 separator=",">
+            (
+            #{item.title},
+            #{item.index},
+            #{item.width},
+            #{item.sort},
+            #{item.isVisible},
+            #{item.userId},
+            now()
+            )
+        </foreach>
+    </insert>
+    <!--根据定时任务名称查询-->
+    <select id="getOperationScheduleByScheduleName" parameterType="Object" resultType="com.hp.server.vo.OperationScheduleVo">
+        select
+            os.id,
+            os.schedule_name as scheduleName,
+            os.schedule_time as scheduleTime,
+            os.control_mode as controlMode,
+            os.target_value as targetValue,
+            os.overall_comp_temp as overallCompTemp,
+            os.individual_comp_temp as individualCompTemp,
+            os.climate_comp_coefficient as climateCompCoefficient,
+            os.outdoor_temp as outdoorTemp,
+            os.is_repeat as isRepeat,
+            os.weeks
+        from operation_schedule os
+        where 1 = 1
+        <if test="companyId != null">
+            and os.company_id = #{companyId}
+        </if>
+        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(scheduleName)">
+            and os.schedule_name = #{scheduleName}
+        </if>
+        limit 1
+    </select>
+</mapper>

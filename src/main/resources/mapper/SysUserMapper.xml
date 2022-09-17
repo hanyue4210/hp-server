@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hp.server.dao.SysUserMapper">
+    <!--根据登录名查询用户信息-->
+    <select id="findByLoginName" parameterType="String" resultType="com.hp.server.entity.SysUser">
+        select
+            su.id,
+            su.login_name as loginName,
+            su.password,
+            su.user_name as userName,
+            su.mobile,
+            su.user_type as userType,
+            su.user_origin as userOrigin,
+            su.company_id as companyId,
+            su.is_deleted as isDeleted
+        from sys_user su
+        where 1 = 1
+        and su.login_name  = #{loginName}
+    </select>
+    <!--根据用户ID查询用户拥有菜单-->
+    <select id="listSysUserMenu" parameterType="Long" resultType="com.hp.server.entity.SysMenu">
+        select
+            sm.id,
+            sm.menu_name as menuName,
+            sm.menu_key as menuKey,
+            sm.parent_id as parentId,
+            sm.menu_level as menuLevel,
+            sm.sort
+        from sys_user_menu um
+        left join sys_menu sm on sm.id = um.menu_id
+        where 1 = 1
+        and um.user_id  = #{userId}
+        order by sm.sort asc
+    </select>
+    <!--根据菜单ID查询菜单-->
+    <select id="getSysMenuById" parameterType="Long" resultType="com.hp.server.entity.SysMenu">
+        select
+            sm.id,
+            sm.menu_name as menuName,
+            sm.menu_key as menuKey,
+            sm.parent_id as parentId,
+            sm.menu_level as menuLevel,
+            sm.sort
+        from sys_menu sm
+        where 1 = 1
+        and sm.id  = #{id}
+    </select>
+    <!--根据用户ID查询用户拥有菜单-->
+    <select id="listSysButton" parameterType="Long" resultType="com.hp.server.entity.SysButton">
+        select
+            sb.id,
+            sb.button_name as buttonName,
+            sb.button_key as buttonKey,
+            sb.menu_key as menuKey,
+            sb.sort
+        from sys_user_button ub
+        left join sys_button sb on sb.id = ub.button_id
+        where 1 = 1
+        and ub.user_id  = #{userId}
+        order by sb.sort asc
+    </select>
+    <!--根据条件查询用户列表-->
+    <select id="listSysUser" parameterType="com.hp.server.dto.SysUserQueryDTO" resultType="com.hp.server.vo.SysUserVo">
+        select
+            su.id,
+            su.login_name as loginName,
+            su.user_name as userName,
+            su.mobile,
+            su.user_type as userType
+        from sys_user su
+        where 1 = 1
+        and su.is_deleted = 0
+        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(userName)">
+            and su.user_name like CONCAT('%', #{userName}, '%')
+        </if>
+        <if test="userType != null">
+            and su.user_type = #{userType}
+        </if>
+        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(menuIds)">
+            and su.id in (select um.user_id from sys_user_menu um where find_in_set(um.menu_id, #{menuIds}))
+        </if>
+        <if test="companyId != null">
+            and su.company_id = #{companyId}
+        </if>
+    </select>
+    <!--创建用户-->
+    <insert id="saveSysUser" parameterType="com.hp.server.dto.SysUserDTO" useGeneratedKeys="true" keyProperty="id">
+        insert into
+            sys_user
+            (
+            login_name,
+            password,
+            user_name,
+            mobile,
+            user_type,
+            company_id,
+            user_origin,
+            create_time
+            )
+        values
+            (
+            #{loginName},
+            #{password},
+            #{userName},
+            #{mobile},
+            #{userType},
+            #{companyId},
+            #{userOrigin},
+            now()
+            )
+    </insert>
+    <!--根据菜单等级查询菜单-->
+    <select id="listAllSysMenuByLevelAndVisible" parameterType="Integer" resultType="com.hp.server.entity.SysMenu">
+        select
+            sm.id,
+            sm.menu_name as menuName,
+            sm.menu_key as menuKey,
+            sm.parent_id as parentId,
+            sm.menu_level as menuLevel,
+            sm.sort
+        from sys_menu sm
+        where 1 = 1
+        <if test="menuLevel != null">
+            and sm.menu_level = #{menuLevel}
+        </if>
+        <if test="isVisible != null">
+            and sm.is_visible = #{isVisible}
+        </if>
+        order by sm.sort asc
+    </select>
+    <!--批量插入用户菜单权限-->
+    <insert id="saveSysUserMenuBatch" parameterType="java.util.List" useGeneratedKeys="true">
+        insert into
+          sys_user_menu
+          (menu_id,
+          user_id,
+          create_time
+          )
+        values
+        <foreach collection="list" item="sysMenu" index="index"
+                 separator=",">
+            (
+            #{sysMenu.menuId},
+            #{sysMenu.userId},
+            now()
+            )
+        </foreach>
+    </insert>
+    <!--查询菜单下的按钮-->
+    <select id="listSysButtonByMenu" parameterType="String" resultType="com.hp.server.entity.SysButton">
+        select
+            sb.id,
+            sb.button_name as buttonName,
+            sb.button_key as buttonKey,
+            sb.menu_key as menuKey,
+            sb.sort
+        from sys_button sb
+        where 1 = 1
+        and sb.menu_key = #{menuKey}
+        order by sb.sort
+    </select>
+    <!--批量插入用户按钮权限-->
+    <insert id="saveSysUserButtonBatch" parameterType="java.util.List" useGeneratedKeys="true">
+        insert into
+            sys_user_button
+            (button_id,
+            user_id,
+            create_time
+            )
+        values
+        <foreach collection="list" item="sysButton" index="index"
+                 separator=",">
+            (
+            #{sysButton.buttonId},
+            #{sysButton.userId},
+            now()
+            )
+        </foreach>
+    </insert>
+    <!--根据用户ID查询用户-->
+    <select id="getSysUserById" parameterType="Long" resultType="com.hp.server.vo.SysUserVo">
+        select
+            su.id,
+            su.login_name as loginName,
+            su.user_name as userName,
+            su.mobile,
+            su.user_type as userType
+        from sys_user su
+        where 1 = 1
+        and su.id  = #{id}
+    </select>
+    <!--修改用户-->
+    <update id="updateSysUser" parameterType="com.hp.server.dto.SysUserDTO">
+        update sys_user
+        set
+            login_name = #{loginName},
+            <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(password)">
+                password = #{password},
+            </if>
+            user_name = #{userName},
+            mobile = #{mobile},
+            user_type = #{userType}
+        where id = #{id}
+    </update>
+    <!--删除用户 逻辑删除-->
+    <update id="deleteSysUser" parameterType="Long">
+        update sys_user
+        set
+            is_deleted = 1
+        where id = #{userId}
+    </update>
+    <!--删除用户关联菜单权限-->
+    <delete id="deleteSysUserMenu" parameterType="Long">
+        delete from sys_user_menu
+        where user_id = #{userId}
+    </delete>
+    <!--删除用户关联按钮权限-->
+    <delete id="deleteSysUserButton" parameterType="Long">
+        delete from sys_user_button
+        where user_id = #{userId}
+    </delete>
+    <!--查询用户菜单权限列表（功能权限设置列表）-->
+    <select id="listSysMenuIsOpen" parameterType="Integer" resultType="com.hp.server.vo.SysUserMenuVo">
+        select
+            sm.id as menuId,
+            sm.menu_name as menuName,
+            sm.menu_key as menuKey,
+            (select count(1) from sys_user_menu um where um.user_id = #{userId} and um.menu_id = sm.id) as isOpen,
+            sm.parent_id as parentId
+        from sys_menu sm
+        where 1 = 1
+        <if test="menuLevel != null">
+            and sm.menu_level = #{menuLevel}
+        </if>
+        <if test="isVisible != null">
+            and sm.is_visible = #{isVisible}
+        </if>
+        order by sm.sort asc
+    </select>
+    <!--删除未选中的菜单下的用户按钮权限-->
+    <delete id="deleteSysUserButtonByUserIdAndMenuId" parameterType="Object">
+        delete from sys_user_button
+        where user_id = #{userId}
+        and button_id in
+        (
+            select sb.id from sys_button sb where sb.menu_key in
+            <foreach collection="unCheckedMenuList" item="eachKey" index="currentIndex" open="(" separator="," close=")">
+              #{eachKey}
+            </foreach>
+        )
+    </delete>
+    <!--查询用户按钮权限列表（功能权限设置列表）-->
+    <select id="listSysUserButtonIsOpen" parameterType="Object" resultType="com.hp.server.vo.SysUserButtonVo">
+        select
+            sb.id as buttonId,
+            sb.button_name as buttonName,
+            (select count(1) from sys_user_button ub where ub.user_id = #{userId} and ub.button_id = sb.id) as isOpen
+        from sys_button sb
+        where 1 = 1
+        and sb.menu_key = #{menuKey}
+        order by sb.sort asc
+    </select>
+    <!--修改密码-->
+    <update id="updatePassword" parameterType="Object">
+        update sys_user
+        set
+            password = #{password}
+        where id = #{userId}
+    </update>
+    <!--查询用户按钮权限列表-->
+    <select id="listSysUserButtonIsOpenOpt" parameterType="Object" resultType="com.hp.server.vo.SysAuthVo">
+        select
+            sb.id,
+            sb.button_name as `name`,
+            concat_ws(':',sb.menu_key,sb.button_key) as `key`,
+            (select count(1) from sys_user_button ub where ub.user_id = #{userId} and ub.button_id = sb.id) as isOpen
+        from sys_button sb
+        where 1 = 1
+        and sb.menu_key = #{menuKey}
+        order by sb.sort asc
+    </select>
+    <!--根据父菜单ID查询子菜单-->
+    <select id="listSysMenuIsOpenByParentId" parameterType="Long" resultType="com.hp.server.vo.SysAuthVo">
+        select
+            sm.id,
+            sm.menu_name as `name`,
+            sm.menu_key as `key`,
+            (select count(1) from sys_user_menu um where um.user_id = #{userId} and um.menu_id = sm.id) as isOpen
+        from sys_menu sm
+        where 1 = 1
+        and sm.parent_id = #{parentId}
+        order by sm.sort asc
+    </select>
+</mapper>
